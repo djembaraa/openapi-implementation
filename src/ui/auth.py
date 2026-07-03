@@ -2,6 +2,13 @@ import streamlit as st
 from supabase import Client
 
 def render_login(supabase: Client):
+    """
+    Me-render halaman login dan registrasi.
+    Memungkinkan pengguna untuk masuk menggunakan Email/Password atau Google OAuth.
+    
+    Args:
+        supabase (Client): Klien Supabase yang sudah diinisialisasi untuk autentikasi.
+    """
     # Spacer atas
     st.markdown("<br><br>", unsafe_allow_html=True)
     
@@ -15,27 +22,31 @@ def render_login(supabase: Client):
         
         # Kotak Login (Card)
         with st.container(border=True):
-            email = st.text_input("Email", placeholder="contoh@email.com")
-            password = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
-            
-            st.write("") # Sedikit jarak
-            
-            if st.button("Log in", use_container_width=True, type="primary"):
-                try:
-                    res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = res.user.id
-                    st.session_state.user_email = res.user.email
-                    st.rerun()
-                except Exception:
-                    st.error("Login gagal! Pastikan email dan password benar.")
-                    
-            if st.button("Sign up (Buat Akun)", use_container_width=True, type="secondary"):
-                try:
-                    supabase.auth.sign_up({"email": email, "password": password})
-                    st.success("Registrasi berhasil! Silakan cek email atau langsung masuk.")
-                except Exception as e:
-                    st.error(f"Sign up gagal: {e}")
+            with st.form("login_form", clear_on_submit=False):
+                email = st.text_input("Email", placeholder="contoh@email.com")
+                password = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
+                
+                st.write("") # Sedikit jarak
+                
+                login_btn = st.form_submit_button("Log in", use_container_width=True, type="primary")
+                signup_btn = st.form_submit_button("Sign up (Buat Akun)", use_container_width=True, type="secondary")
+                
+                if login_btn:
+                    try:
+                        res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                        st.session_state.logged_in = True
+                        st.session_state.user_id = res.user.id
+                        st.session_state.user_email = res.user.email
+                        st.rerun()
+                    except Exception:
+                        st.error("Login gagal! Pastikan email dan password benar.")
+                        
+                if signup_btn:
+                    try:
+                        supabase.auth.sign_up({"email": email, "password": password})
+                        st.success("Registrasi berhasil! Silakan cek email atau langsung masuk.")
+                    except Exception as e:
+                        st.error(f"Sign up gagal: {e}")
 
             # Pemisah kustom yang presisi (Margin sangat rapat)
             st.markdown("""
@@ -82,6 +93,13 @@ def render_login(supabase: Client):
                 st.error(f"Google Login error: {e}")
 
 def handle_oauth_redirect(supabase: Client):
+    """
+    Menangani redirect URL setelah pengguna berhasil login menggunakan Google OAuth.
+    Mengambil kode autentikasi dari parameter URL dan menukarnya dengan sesi pengguna aktif.
+    
+    Args:
+        supabase (Client): Klien Supabase untuk menukar kode autentikasi.
+    """
     if "code" in st.query_params:
         code = st.query_params["code"]
         try:

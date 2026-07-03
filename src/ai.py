@@ -11,6 +11,11 @@ from openai import OpenAI
 import streamlit as st
 
 class AIAssistant:
+    """
+    Kelas untuk mengelola interaksi dengan model AI OpenAI/Gemini.
+    Menangani berbagai tugas termasuk obrolan, RAG (Retrieval-Augmented Generation),
+    Vision (pengolahan gambar), dan integrasi Audio (STT & TTS).
+    """
     def __init__(self, client: OpenAI):
         self.client = client
         self.system_prompt = (
@@ -23,6 +28,17 @@ class AIAssistant:
 
     @staticmethod
     def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+        """
+        Memecah teks panjang menjadi potongan-potongan kecil (chunks) untuk keperluan RAG.
+        
+        Args:
+            text (str): Teks asli yang akan dipisah.
+            chunk_size (int): Ukuran maksimal karakter per potongan.
+            overlap (int): Jumlah karakter tumpang tindih antar potongan untuk menjaga konteks.
+            
+        Returns:
+            List[str]: Daftar potongan teks.
+        """
         chunks = []
         start = 0
         while start < len(text):
@@ -33,6 +49,16 @@ class AIAssistant:
 
     @staticmethod
     def extract_text_from_upload(uploaded_file) -> str:
+        """
+        Mengekstrak teks dari file yang diunggah pengguna.
+        Mendukung format PDF (menggunakan PyPDF2) dan TXT.
+        
+        Args:
+            uploaded_file: Objek file dari Streamlit st.file_uploader/chat_input.
+            
+        Returns:
+            str: Hasil ekstraksi teks dari dokumen.
+        """
         text = ""
         try:
             if uploaded_file.name.lower().endswith(".pdf"):
@@ -49,6 +75,15 @@ class AIAssistant:
 
     @staticmethod
     def encode_image(uploaded_file) -> str:
+        """
+        Mengonversi gambar yang diunggah menjadi string Base64 yang siap dikirim ke API Vision.
+        
+        Args:
+            uploaded_file: Objek file gambar (JPG/PNG).
+            
+        Returns:
+            str: Data URI Base64 dari gambar tersebut.
+        """
         try:
             bytes_data = uploaded_file.getvalue()
             base64_img = base64.b64encode(bytes_data).decode('utf-8')
@@ -59,6 +94,15 @@ class AIAssistant:
             return None
 
     def generate_embeddings(self, chunks: List[str]) -> np.ndarray:
+        """
+        Menghasilkan vektor embeddings untuk potongan teks menggunakan API embedding AI.
+        
+        Args:
+            chunks (List[str]): Daftar potongan teks.
+            
+        Returns:
+            np.ndarray: Matriks numpy berukuran (N, dimensi) yang berisi embeddings.
+        """
         try:
             response = self.client.embeddings.create(input=chunks, model="gemini-embedding-2")
             return np.array([item.embedding for item in response.data], dtype=np.float32)
@@ -88,6 +132,15 @@ class AIAssistant:
             return ""
 
     def transcribe_audio(self, audio_file) -> str:
+        """
+        Mengubah rekaman suara (Speech) menjadi teks (Text) menggunakan Google Web Speech API.
+        
+        Args:
+            audio_file: File audio yang direkam melalui mikrofon.
+            
+        Returns:
+            str: Teks hasil transkripsi.
+        """
         r = sr.Recognizer()
         try:
             with sr.AudioFile(audio_file) as source:
@@ -112,6 +165,19 @@ class AIAssistant:
             return None
 
     def get_response(self, prompt: str, context: str, history: List[Dict[str, str]], base64_image: str = None) -> Tuple[str, float, int]:
+        """
+        Berkomunikasi dengan model bahasa AI untuk mendapatkan jawaban.
+        Fungsi ini menangani percakapan teks, RAG (penyertaan konteks), dan Vision.
+        
+        Args:
+            prompt (str): Pertanyaan dari pengguna.
+            context (str): Konteks dari dokumen (jika ada).
+            history (List[Dict[str, str]]): Riwayat percakapan sebelumnya.
+            base64_image (str, optional): Gambar ter-encode Base64 jika pengguna mengunggah gambar.
+            
+        Returns:
+            Tuple[str, float, int]: (Teks Jawaban AI, Waktu respons dalam detik, Total token yang digunakan)
+        """
         messages = [{"role": "system", "content": self.system_prompt}]
         if context:
             messages.append({

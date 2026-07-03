@@ -5,6 +5,14 @@ from src.ai import AIAssistant
 from src.config import get_admin_email
 
 def render_sidebar(db: DatabaseManager, ai: AIAssistant):
+    """
+    Me-render sidebar (navigasi samping) dari aplikasi obrolan.
+    Menampilkan profil pengguna, akses dasbor admin, riwayat obrolan, dan opsi obrolan baru.
+    
+    Args:
+        db (DatabaseManager): Instansi pengelola database.
+        ai (AIAssistant): Instansi pengelola AI.
+    """
     with st.sidebar:
         st.markdown("### 👤 Akun Anda")
         st.write(f"Masuk sebagai: **{st.session_state.user_email}**")
@@ -31,6 +39,10 @@ def render_sidebar(db: DatabaseManager, ai: AIAssistant):
                         st.session_state.chat_input_key = t['prompt_text']
         
         st.divider()
+        st.markdown("### ⚙️ Pengaturan")
+        st.session_state.tts_enabled = st.toggle("🔊 Mode Suara (TTS)", value=False, help="Aktifkan untuk membiarkan AI membacakan balasan.")
+        
+        st.divider()
         if st.button("➕ Obrolan Baru", type="primary", use_container_width=True):
             st.session_state.current_session_id = None
             st.session_state.view = "chat"
@@ -45,6 +57,15 @@ def render_sidebar(db: DatabaseManager, ai: AIAssistant):
                 st.rerun()
 
 def render_chat(db: DatabaseManager, ai: AIAssistant):
+    """
+    Me-render jendela obrolan utama.
+    Menangani status memori (history), input pengguna (teks, gambar, audio, PDF),
+    proses Retrieval-Augmented Generation (RAG), pemanggilan AI, dan Text-to-Speech (TTS).
+    
+    Args:
+        db (DatabaseManager): Instansi pengelola database.
+        ai (AIAssistant): Instansi pengelola AI.
+    """
     # Inisialisasi FAISS Index dari memory jika ada
     faiss_index = None
     if "embeddings" in st.session_state and len(st.session_state.embeddings) > 0:
@@ -159,11 +180,12 @@ def render_chat(db: DatabaseManager, ai: AIAssistant):
                 st.markdown(answer)
                 st.caption(f"⏱️ {r_time} dtk | 🪙 {tokens} tokens")
                 
-                # Hasilkan audio (Text-to-Speech)
-                with st.spinner("Menghasilkan suara..."):
-                    audio_fp = ai.generate_speech(answer)
-                    if audio_fp:
-                        st.audio(audio_fp, format="audio/mp3")
+                # Hasilkan audio (Text-to-Speech) HANYA jika mode suara diaktifkan
+                if st.session_state.get("tts_enabled", False):
+                    with st.spinner("Menghasilkan suara..."):
+                        audio_fp = ai.generate_speech(answer)
+                        if audio_fp:
+                            st.audio(audio_fp, format="audio/mp3")
 
                 db.add_message(st.session_state.current_session_id, "assistant", answer)
 

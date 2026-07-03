@@ -2,6 +2,14 @@ import streamlit as st
 from src.database import DatabaseManager
 
 def render_admin_dashboard(db: DatabaseManager):
+    """
+    Me-render halaman Dasbor Analitik Admin.
+    Hanya bisa diakses jika email pengguna yang login cocok dengan ADMIN_EMAIL.
+    Menampilkan metrik seperti pengguna aktif, sesi obrolan, dan total interaksi.
+    
+    Args:
+        db (DatabaseManager): Instansi DatabaseManager untuk melakukan query analitik.
+    """
     st.markdown("<h1>👑 Dasbor Analitik Admin</h1>", unsafe_allow_html=True)
     
     if st.button("⬅️ Kembali ke Chat Utama", type="primary"):
