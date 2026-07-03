@@ -8,7 +8,7 @@ from src.ui.chat import render_sidebar, render_chat
 from src.ui.admin import render_admin_dashboard
 
 # Konfigurasi Halaman
-st.set_page_config(page_title="Djembar AI", page_icon="✨", layout="wide")
+st.set_page_config(page_title="Rayn.AI", page_icon="✨", layout="wide")
 
 # CSS Global (Dirombak untuk matching dengan referensi)
 st.markdown("""

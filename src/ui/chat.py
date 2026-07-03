@@ -56,7 +56,7 @@ def render_chat(db: DatabaseManager, ai: AIAssistant):
         current_messages = [{"role": m["role"], "content": m["content"]} for m in msgs]
 
     if len(current_messages) == 0:
-        st.markdown("<h1 class='center-text' style='font-size: 4rem; margin-top:5vh; margin-bottom: 2rem; font-weight:700;'>Ai Chat</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 class='center-text' style='font-size: 4rem; margin-top:5vh; margin-bottom: 2rem; font-weight:700;'>Rayn.AI ✨</h1>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         def render_clean_card(icon, title, prompt):
             if st.button(f"{icon} {title}", use_container_width=True):

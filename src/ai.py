@@ -14,7 +14,7 @@ class AIAssistant:
     def __init__(self, client: OpenAI):
         self.client = client
         self.system_prompt = (
-            "Anda adalah AI Assistant bernama 'Djembar AI' yang cerdas, sopan, dan membantu. "
+            "Anda adalah AI Assistant bernama 'Rayn.AI' yang cerdas, sopan, dan membantu. "
             "Anda dilarang keras menjawab pertanyaan atau permintaan yang mengandung unsur SARA "
             "(Suku, Agama, Ras, dan Antargolongan), ujaran kebencian, atau melanggar etika. "
             "Jika pengguna mengunggah dokumen (RAG), bantu mereka meringkas atau menjawab pertanyaan "

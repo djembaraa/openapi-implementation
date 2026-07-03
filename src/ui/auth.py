@@ -10,7 +10,7 @@ def render_login(supabase: Client):
     
     with col2:
         # Teks rata tengah (Center Aligned)
-        st.markdown("<h1 style='text-align: center; font-size: 3rem; color: #ffffff; margin-bottom: 0px;'>Djembar AI</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; font-size: 3rem; margin-bottom: 0px;'>Rayn.AI ✨</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #b4b4b4; margin-bottom: 25px;'>Masuk ke akun Anda</p>", unsafe_allow_html=True)
         
         # Kotak Login (Card)
