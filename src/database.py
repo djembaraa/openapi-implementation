@@ -54,3 +54,10 @@ class DatabaseManager:
         except Exception as e:
             print(e)
             return []
+
+    def get_prompt_templates(self) -> List[Dict[str, Any]]:
+        try:
+            res = self.client.table("prompt_templates").select("*").order("id").execute()
+            return res.data
+        except Exception:
+            return []

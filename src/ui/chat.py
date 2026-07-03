@@ -20,6 +20,17 @@ def render_sidebar(db: DatabaseManager, ai: AIAssistant):
             st.rerun()
             
         st.divider()
+        st.markdown("### 💡 Bantuan Prompt")
+        with st.popover("Pilih Template Prompt", use_container_width=True):
+            templates = db.get_prompt_templates()
+            if not templates:
+                st.info("Template belum tersedia di Supabase.")
+            else:
+                for t in templates:
+                    if st.button(f"{t.get('icon', '📌')} {t['title']}", use_container_width=True, key=f"tpl_{t['id']}"):
+                        st.session_state.chat_input_key = t['prompt_text']
+        
+        st.divider()
         if st.button("➕ Obrolan Baru", type="primary", use_container_width=True):
             st.session_state.current_session_id = None
             st.session_state.view = "chat"
