@@ -1,7 +1,6 @@
 -- HAPUS TABEL LAMA JIKA ADA
 DROP TABLE IF EXISTS chat_messages CASCADE;
 DROP TABLE IF EXISTS chat_sessions CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
 
 -- 1. Membuat tabel 'chat_sessions' yang terhubung dengan 'auth.users'
 CREATE TABLE chat_sessions (
@@ -20,16 +19,23 @@ CREATE TABLE chat_messages (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Menyiapkan Row Level Security (Biar aman)
+-- 3. Menyiapkan Row Level Security (RLS)
 ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can only see their own sessions" ON chat_sessions
+-- 4. Kebijakan untuk User biasa (Hanya melihat milik sendiri)
+CREATE POLICY "Users can see their own sessions" ON chat_sessions
     FOR ALL USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can only see messages in their sessions" ON chat_messages
+CREATE POLICY "Users can see their own messages" ON chat_messages
     FOR ALL USING (
-        session_id IN (
-            SELECT id FROM chat_sessions WHERE user_id = auth.uid()
-        )
+        session_id IN (SELECT id FROM chat_sessions WHERE user_id = auth.uid())
     );
+
+-- 5. Kebijakan untuk Admin (Melihat semuanya)
+-- Ganti 'admin@djembar.ai' dengan email admin yang sebenarnya
+CREATE POLICY "Admin can see all sessions" ON chat_sessions
+    FOR ALL USING (auth.jwt() ->> 'email' = 'admin@djembar.ai');
+
+CREATE POLICY "Admin can see all messages" ON chat_messages
+    FOR ALL USING (auth.jwt() ->> 'email' = 'admin@djembar.ai');
