@@ -37,9 +37,9 @@ def render_login(supabase: Client):
                 except Exception as e:
                     st.error(f"Sign up gagal: {e}")
 
-            # Pemisah kustom yang presisi (Margin sangat rapat, tidak ada whitespace berlebih)
+            # Pemisah kustom yang presisi (Margin sangat rapat)
             st.markdown("""
-                <div style='display: flex; align-items: center; margin: 15px 0;'>
+                <div style='display: flex; align-items: center; margin: 10px 0;'>
                     <hr style='flex-grow: 1; border: none; border-top: 1px solid #3f4147;'>
                     <span style='padding: 0 15px; color: #8e8e8e; font-size: 0.85rem;'>ATAU</span>
                     <hr style='flex-grow: 1; border: none; border-top: 1px solid #3f4147;'>
@@ -53,10 +53,11 @@ def render_login(supabase: Client):
                     "options": {"skip_browser_redirect": True}
                 })
                 
-                # Tombol Google dengan hover efek CSS asli Streamlit disiasati via style
+                # Tombol Google dengan display block agar full-width sempurna
                 st.markdown(f"""
-                <a href="{oauth_res.url}" target="_self" style="text-decoration: none;">
+                <a href="{oauth_res.url}" target="_self" style="text-decoration: none; display: block; width: 100%;">
                     <div style="
+                        width: 100%;
                         display: flex; 
                         align-items: center; 
                         justify-content: center; 
@@ -73,6 +74,10 @@ def render_login(supabase: Client):
                     </div>
                 </a>
                 """, unsafe_allow_html=True)
+                
+                # SPACER PENUTUP: Mencegah bug Streamlit di mana elemen markdown terakhir bocor keluar dari border
+                st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+                
             except Exception as e:
                 st.error(f"Google Login error: {e}")
 
