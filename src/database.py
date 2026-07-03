@@ -27,9 +27,13 @@ class DatabaseManager:
             List[Dict[str, Any]]: Daftar sesi obrolan yang diurutkan dari yang terbaru.
         """
         try:
+            # Mengirim query SELECT ke tabel 'chat_sessions' untuk mencari baris dengan user_id yang cocok.
+            # Menggunakan .order() agar sesi terbaru muncul di paling atas (descending order).
             res = self.client.table("chat_sessions").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+            # Mengembalikan list dari dictionary yang berisi data sesi
             return res.data
         except Exception:
+            # Jika terjadi error jaringan atau tabel tidak ditemukan, kembalikan list kosong
             return []
 
     def create_session(self, user_id: str, title: str, user_email: str = None) -> str:
@@ -45,21 +49,28 @@ class DatabaseManager:
         Returns:
             str: ID (UUID) dari sesi obrolan yang baru dibuat.
         """
+        # Menyiapkan dictionary payload dasar untuk dikirim ke database
         data = {
             "user_id": user_id,
             "title": title
         }
+        
         try:
+            # Jika admin menyediakan fitur pelacakan email, tambahkan ke payload
             if user_email:
                 data_with_email = data.copy()
                 data_with_email["user_email"] = user_email
+                # Lakukan proses INSERT ke Supabase
                 res = self.client.table("chat_sessions").insert(data_with_email).execute()
                 return res.data[0]["id"]
         except Exception:
-            # Jika kolom user_email belum dibuat oleh pengguna di Supabase, fallback ke standar
+            # Jika kolom user_email belum dibuat oleh pengguna di struktur tabel Supabase,
+            # tangani error ini dengan tenang (graceful fallback) dan gunakan versi tanpa email.
             pass
             
+        # Fallback eksekusi jika insert dengan email gagal / tidak ada email
         res = self.client.table("chat_sessions").insert(data).execute()
+        # Mengembalikan ID (primary key) dari record yang baru saja terbentuk
         return res.data[0]["id"]
 
     def get_messages(self, session_id: int) -> List[Dict[str, Any]]:
@@ -73,9 +84,12 @@ class DatabaseManager:
             List[Dict[str, Any]]: Daftar pesan obrolan yang diurutkan secara kronologis.
         """
         try:
+            # Mencari pesan berdasarkan ID sesi yang dituju.
+            # Mengurutkan kronologis berdasarkan 'created_at' agar alur chat tidak terbalik.
             res = self.client.table("chat_messages").select("*").eq("session_id", session_id).order("created_at").execute()
             return res.data
         except Exception:
+            # Hindari crash jika gagal mengambil pesan
             return []
 
     def add_message(self, session_id: int, role: str, content: str):
@@ -87,6 +101,7 @@ class DatabaseManager:
             role (str): Peran pengirim pesan ('user' atau 'assistant').
             content (str): Isi teks pesan.
         """
+        # Memasukkan payload pesan (role dan teks) ke dalam tabel 'chat_messages'
         self.client.table("chat_messages").insert({
             "session_id": session_id,
             "role": role,
@@ -102,11 +117,12 @@ class DatabaseManager:
             List[Dict[str, Any]]: Daftar seluruh sesi obrolan di sistem.
         """
         try:
-            # We select user_email or auth.users info if joined, but joining cross schema in Supabase is tricky.
-            # RLS policy must allow admin to read all.
+            # Catatan: Kebijakan RLS (Row Level Security) Supabase harus diubah
+            # agar pengguna dengan role admin diizinkan melakukan .select("*") tanpa filter eq().
             res = self.client.table("chat_sessions").select("*").order("created_at", desc=True).execute()
             return res.data
         except Exception as e:
+            # Cetak error ke console server agar mudah di debug oleh developer
             print(e)
             return []
 

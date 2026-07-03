@@ -18,11 +18,17 @@ def render_admin_dashboard(db: DatabaseManager):
         
     st.markdown("---")
     
+    # Memanggil database untuk mengambil seluruh sesi obrolan (chat_sessions) dari SEMUA pengguna
     sessions = db.get_all_sessions_admin()
     
-    # Menghitung metrik (KPIs)
+    # --- MENGHITUNG METRIK (KPIs) ---
+    # 1. Total Sesi Obrolan: Sama dengan jumlah baris yang didapatkan dari database
     total_sessions = len(sessions)
+    
+    # 2. Total Pengguna Aktif: Menggunakan set() untuk menghilangkan duplikat ID user
     unique_users = len(set(s["user_id"] for s in sessions))
+    
+    # 3. Total Interaksi (Pesan): Lakukan iterasi pada setiap sesi, ambil pesannya, dan jumlahkan
     total_messages = 0
     for s in sessions:
         msgs = db.get_messages(s["id"])
@@ -45,19 +51,28 @@ def render_admin_dashboard(db: DatabaseManager):
         st.info("Belum ada aktivitas di sistem.")
         return
         
-    # Mengelompokkan berdasarkan pengguna agar rapi (Gestalt: Proximity)
+    # Mengelompokkan riwayat percakapan berdasarkan UUID Pengguna (Gestalt: Proximity)
+    # Tujuannya agar admin tidak bingung melihat tabel yang acak
     grouped_sessions = {}
     for s in sessions:
         uid = s["user_id"]
+        # Jika UUID ini belum ada di dictionary, buatkan wadah array (list) baru
         if uid not in grouped_sessions:
             grouped_sessions[uid] = []
+        # Tambahkan data sesi ke dalam wadah milik UUID tersebut
         grouped_sessions[uid].append(s)
         
+    # Lakukan perulangan untuk merender setiap pengguna ke layar
     for uid, user_sessions in grouped_sessions.items():
+        # st.expander() membuat tampilan kotak yang bisa di-klik untuk membuka/menutup isi (accordion)
         with st.expander(f"👤 User ID: {uid} | 💬 {len(user_sessions)} Topik Obrolan"):
+            # Lakukan perulangan untuk merender semua sesi milik pengguna tersebut
             for s in user_sessions:
                 st.markdown(f"**Topik:** {s['title']} *(Tgl: {s['created_at'][:10]})*")
+                
+                # Tombol untuk melihat isi pesan secara detail (Transcript)
                 if st.button("Lihat Transkrip Pesan", key=f"admin_btn_{s['id']}"):
+                    # Ambil daftar pesannya dari database
                     msgs = db.get_messages(s['id'])
                     if not msgs:
                         st.warning("Percakapan kosong.")

@@ -1,3 +1,9 @@
+"""
+Modul Utama (Entry Point) untuk Aplikasi Rayn.AI.
+Modul ini bertanggung jawab untuk mengatur konfigurasi halaman Streamlit,
+mendeklarasikan gaya CSS global, menginisialisasi state management,
+serta menangani perutean (routing) antara halaman login, chat, dan admin.
+"""
 import streamlit as st
 import numpy as np
 from src.config import get_openai_client, get_supabase_client
@@ -113,13 +119,21 @@ if "preset_prompt" not in st.session_state:
     st.session_state.preset_prompt = None
 
 # --- Routing Utama ---
+# Tangani redirect dari Google OAuth jika ada (mengambil kode autentikasi dari URL)
 handle_oauth_redirect(supabase_client)
 
+# Logika perutean (Routing)
 if not st.session_state.logged_in:
+    # Jika belum login, tampilkan halaman Login/Register
     render_login(supabase_client)
 else:
+    # Jika sudah login, tampilkan Sidebar
     render_sidebar(db, ai)
+    
+    # Cek mode tampilan (view) saat ini
     if st.session_state.view == "admin":
+        # Render Halaman Dasbor Admin
         render_admin_dashboard(db)
     else:
+        # Render Halaman Obrolan Utama (Chat)
         render_chat(db, ai)

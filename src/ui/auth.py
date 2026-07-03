@@ -22,30 +22,44 @@ def render_login(supabase: Client):
         
         # Kotak Login (Card)
         with st.container(border=True):
+            # Menggunakan st.form agar pengguna bisa menekan tombol 'Enter' di keyboard untuk submit
             with st.form("login_form", clear_on_submit=False):
+                # Input email biasa
                 email = st.text_input("Email", placeholder="contoh@email.com")
+                # Input password dengan tipe 'password' agar diketik menjadi titik-titik rahasia (***)
                 password = st.text_input("Password", type="password", placeholder="Minimal 6 karakter")
                 
                 st.write("") # Sedikit jarak
                 
+                # Mendeklarasikan 2 tombol submit dalam 1 form
                 login_btn = st.form_submit_button("Log in", use_container_width=True, type="primary")
                 signup_btn = st.form_submit_button("Sign up (Buat Akun)", use_container_width=True, type="secondary")
                 
+                # Jika tombol Log in ditekan (atau pengguna menekan tombol Enter)
                 if login_btn:
                     try:
+                        # Panggil API Supabase Auth untuk masuk menggunakan email dan sandi
                         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                        
+                        # Jika berhasil, simpan status login dan data profil pengguna ke memori Streamlit
                         st.session_state.logged_in = True
                         st.session_state.user_id = res.user.id
                         st.session_state.user_email = res.user.email
+                        
+                        # Refresh halaman untuk menerapkan perubahan status login
                         st.rerun()
                     except Exception:
                         st.error("Login gagal! Pastikan email dan password benar.")
                         
+                # Jika tombol Sign up ditekan
                 if signup_btn:
                     try:
+                        # Panggil API Supabase Auth untuk mendaftarkan akun baru
                         supabase.auth.sign_up({"email": email, "password": password})
+                        # Jika konfigurasi Supabase membutuhkan konfirmasi email, user harus cek inbox mereka
                         st.success("Registrasi berhasil! Silakan cek email atau langsung masuk.")
                     except Exception as e:
+                        # Jika email sudah terdaftar atau password terlalu pendek
                         st.error(f"Sign up gagal: {e}")
 
             # Pemisah kustom yang presisi (Margin sangat rapat)
@@ -57,11 +71,12 @@ def render_login(supabase: Client):
                 </div>
             """, unsafe_allow_html=True)
             
-            # Google OAuth Button
+            # Tombol Google OAuth Button (SSO)
             try:
+                # Meminta URL redirect OAuth dari Supabase (Provider: Google)
                 oauth_res = supabase.auth.sign_in_with_oauth({
                     "provider": "google",
-                    "options": {"skip_browser_redirect": True}
+                    "options": {"skip_browser_redirect": True} # Kita akan menangani redirect URL secara manual via tag <a>
                 })
                 
                 # Tombol Google dengan display block agar full-width sempurna
@@ -100,14 +115,24 @@ def handle_oauth_redirect(supabase: Client):
     Args:
         supabase (Client): Klien Supabase untuk menukar kode autentikasi.
     """
+    # Cek jika ada query parameter 'code' di URL bar browser
     if "code" in st.query_params:
+        # Ambil nilainya
         code = st.query_params["code"]
         try:
+            # Tukarkan 'code' rahasia tersebut ke Supabase untuk mendapatkan Token Sesi valid
             res = supabase.auth.exchange_code_for_session({"auth_code": code})
+            
+            # Daftarkan status login pengguna ke memori Streamlit
             st.session_state.logged_in = True
             st.session_state.user_id = res.user.id
             st.session_state.user_email = res.user.email
+            
+            # Bersihkan query parameter panjang di URL bar agar rapi (aesthetic)
             st.query_params.clear()
+            
+            # Refresh halaman ke layar Chat Utama
             st.rerun()
         except Exception as e:
+            # Token mungkin kedaluwarsa atau sudah dipakai
             st.error(f"Gagal memproses kode autentikasi: {e}")

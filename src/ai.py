@@ -39,12 +39,22 @@ class AIAssistant:
         Returns:
             List[str]: Daftar potongan teks.
         """
+        # Inisialisasi array kosong untuk menyimpan hasil potongan teks
         chunks = []
+        # Menetapkan titik awal (pointer) pembacaan teks
         start = 0
+        
+        # Lakukan perulangan (loop) selama pointer awal belum mencapai akhir teks
         while start < len(text):
+            # Tentukan batas akhir potongan (start + chunk_size)
             end = start + chunk_size
+            # Potong teks dari indeks start hingga end, lalu tambahkan ke dalam list
             chunks.append(text[start:end])
+            # Geser pointer awal ke depan, dikurangi 'overlap' agar ada teks yang tumpang tindih
+            # Tumpang tindih ini penting agar konteks kalimat yang terpotong tidak hilang
             start += (chunk_size - overlap)
+            
+        # Mengembalikan list berisi potongan teks
         return chunks
 
     @staticmethod
@@ -59,18 +69,30 @@ class AIAssistant:
         Returns:
             str: Hasil ekstraksi teks dari dokumen.
         """
+        # Variabel penampung untuk seluruh teks yang berhasil dibaca
         text = ""
         try:
+            # Cek apakah file yang diunggah ber-ekstensi .pdf
             if uploaded_file.name.lower().endswith(".pdf"):
+                # Inisialisasi pembaca PDF menggunakan PyPDF2
                 pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                # Lakukan iterasi (loop) membaca setiap halaman dalam file PDF
                 for page in pdf_reader.pages:
+                    # Ekstrak teks dari halaman tersebut
                     page_text = page.extract_text()
+                    # Jika ada teks, gabungkan ke dalam variabel penampung dengan baris baru
                     if page_text:
                         text += page_text + "\n"
+                        
+            # Cek apakah file ber-ekstensi .txt
             elif uploaded_file.name.lower().endswith(".txt"):
+                # Langsung baca isi file sebagai string (menggunakan encoding UTF-8)
                 text = uploaded_file.getvalue().decode("utf-8")
         except Exception as e:
+            # Jika file korup atau tidak terbaca, tampilkan pesan error UI
             st.error(f"Gagal membaca file: {e}")
+            
+        # Kembalikan string panjang berisi seluruh teks dokumen
         return text
 
     @staticmethod
@@ -104,9 +126,15 @@ class AIAssistant:
             np.ndarray: Matriks numpy berukuran (N, dimensi) yang berisi embeddings.
         """
         try:
+            # Mengirim potongan-potongan teks ke model embedding (menggunakan Gemini-2)
+            # Hasil dari pemanggilan ini adalah sekumpulan angka desimal panjang (vektor)
             response = self.client.embeddings.create(input=chunks, model="gemini-embedding-2")
+            
+            # Mengonversi hasil respon API menjadi Numpy Array bertipe Float32
+            # Numpy Array digunakan agar kalkulasi matematika oleh FAISS nanti berjalan sangat cepat
             return np.array([item.embedding for item in response.data], dtype=np.float32)
         except Exception as e:
+            # Tangani error jika koneksi internet terputus atau API bermasalah
             st.error(f"Gagal menghasilkan embeddings: {e}")
             return np.array([])
 
@@ -120,15 +148,21 @@ class AIAssistant:
 
     def get_relevant_context(self, query: str, chunks: List[str], index, top_k: int = 3) -> str:
         if len(chunks) == 0 or index is None:
+            # Jika tidak ada dokumen atau indeks, langsung kembalikan string kosong
             return ""
         try:
+            # 1. Konversi teks pertanyaan user menjadi vektor embedding yang sama
             query_response = self.client.embeddings.create(input=query, model="gemini-embedding-2")
             query_embedding = np.array([query_response.data[0].embedding], dtype=np.float32)
             
+            # 2. Cari kedekatan (kemiripan/jarak terdekat L2) antara vektor pertanyaan dan vektor dokumen
             distances, indices = index.search(query_embedding, top_k)
-            # Ambil indeks yang valid
+            
+            # 3. Ambil teks asli dari array chunks berdasarkan nomor indeks (indices) hasil pencarian FAISS
+            # Hanya ambil indeks yang valid (!= -1)
             return "\n\n".join([chunks[i] for i in indices[0] if i != -1])
         except Exception:
+            # Gagal mencari konteks, fallback agar chat tetap bisa berlanjut meski tanpa RAG
             return ""
 
     def transcribe_audio(self, audio_file) -> str:
@@ -154,13 +188,24 @@ class AIAssistant:
         return ""
 
     def generate_speech(self, text: str) -> io.BytesIO:
+        """
+        Menghasilkan suara dari teks menggunakan gTTS (Google Text-to-Speech) versi gratis.
+        """
         try:
+            # Inisialisasi gTTS dengan bahasa Indonesia ('id') dan kecepatan baca normal
             tts = gTTS(text=text, lang='id', slow=False)
+            
+            # Membuat wadah (buffer) di dalam memori RAM (bukan di harddisk)
             fp = io.BytesIO()
+            
+            # Menulis file MP3 langsung ke dalam buffer RAM tersebut
             tts.write_to_fp(fp)
+            
+            # Kembalikan posisi pembacaan buffer ke awal (0) agar bisa diputar
             fp.seek(0)
             return fp
         except Exception as e:
+            # Jika gagal (misal koneksi Google tertutup), tampilkan error
             st.error(f"Gagal menghasilkan TTS: {e}")
             return None
 
@@ -178,36 +223,50 @@ class AIAssistant:
         Returns:
             Tuple[str, float, int]: (Teks Jawaban AI, Waktu respons dalam detik, Total token yang digunakan)
         """
+        # 1. Menyiapkan memori jangka panjang (Pesan Sistem Utama)
         messages = [{"role": "system", "content": self.system_prompt}]
+        
+        # 2. Injeksi RAG: Jika ada konteks (jawaban pencarian FAISS dari dokumen PDF)
         if context:
             messages.append({
                 "role": "system",
                 "content": f"Gunakan informasi berikut dari dokumen untuk menjawab jika relevan:\n{context}"
             })
             
-        # Pisahkan history masa lalu dari prompt saat ini (karena chat.py sudah keburu nambahin ke history)
+        # 3. Pisahkan riwayat masa lalu (history) dari input yang sedang diproses.
+        # Ambil 5 pesan terakhir saja agar tidak menghabiskan terlalu banyak token
         past_messages = history[:-1] if len(history) > 0 else []
         messages.extend(past_messages[-5:])
         
+        # 4. Siapkan format payload pesan baru.
+        # Jika menggunakan Vision (teks + gambar), struktur payloadnya berupa list of dicts.
         user_content = [{"type": "text", "text": prompt}]
         if base64_image:
             user_content.append({"type": "image_url", "image_url": {"url": base64_image}})
             
         messages.append({"role": "user", "content": user_content})
         
+        # Catat waktu mulai (untuk fitur Stopwatch)
         start_time = time.time()
+        
         try:
+            # 5. Panggil API AI untuk menghasilkan jawaban (menggunakan model Flash yang sangat cepat)
             response = self.client.chat.completions.create(
                 model="gemini-2.5-flash",
                 messages=messages,
-                temperature=0.7
+                temperature=0.7 # Kreativitas 70%
             )
+            
+            # Catat waktu selesai
             end_time = time.time()
             
+            # 6. Ekstrak data hasil kembalian dari struktur JSON API
             answer = response.choices[0].message.content
             tokens = response.usage.total_tokens
             r_time = round(end_time - start_time, 2)
             
             return answer, r_time, tokens
         except Exception as e:
+            # Tangkap semua kemungkinan error: API limit habis, koneksi putus, input tak wajar
+            # Kembalikan string yang ramah ke pengguna (jangan crash-kan UI)
             return f"Maaf, terjadi kesalahan teknis (Koneksi terputus / API Key tidak valid):\n{str(e)}", 0.0, 0
