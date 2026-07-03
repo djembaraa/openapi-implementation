@@ -22,6 +22,7 @@ def render_sidebar(db: DatabaseManager, ai: AIAssistant):
         st.divider()
         if st.button("➕ Obrolan Baru", type="primary", use_container_width=True):
             st.session_state.current_session_id = None
+            st.session_state.view = "chat"
             st.rerun()
             
         st.markdown("### 💬 Riwayat")
@@ -29,6 +30,7 @@ def render_sidebar(db: DatabaseManager, ai: AIAssistant):
         for s in sessions:
             if st.button(f"{s['title']}", key=f"sess_{s['id']}", use_container_width=True):
                 st.session_state.current_session_id = s['id']
+                st.session_state.view = "chat"
                 st.rerun()
 
 def render_chat(db: DatabaseManager, ai: AIAssistant):

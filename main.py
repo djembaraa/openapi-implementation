@@ -118,8 +118,8 @@ handle_oauth_redirect(supabase_client)
 if not st.session_state.logged_in:
     render_login(supabase_client)
 else:
+    render_sidebar(db, ai)
     if st.session_state.view == "admin":
         render_admin_dashboard(db)
     else:
-        render_sidebar(db, ai)
         render_chat(db, ai)
