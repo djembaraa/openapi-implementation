@@ -7,41 +7,87 @@ from src.ui.auth import render_login, handle_oauth_redirect
 from src.ui.chat import render_sidebar, render_chat
 from src.ui.admin import render_admin_dashboard
 
-# Konfigurasi Halaman (Harus dipanggil paling pertama)
+# Konfigurasi Halaman
 st.set_page_config(page_title="Djembar AI", page_icon="✨", layout="wide")
 
-# CSS Global yang Diperbaiki
+# CSS Global (Dirombak untuk matching dengan referensi)
 st.markdown("""
 <style>
     /* Global Reset & Colors */
-    .stApp { background-color: #1e1e1e; color: #ececec; }
-    .block-container { padding-top: 3rem; max-width: 900px; }
+    .stApp { background-color: #1e2024; color: #ececec; }
     
     /* Typography */
-    h1, h2, h3 { color: #ffffff !important; }
+    h1, h2, h3, h4 { color: #ffffff !important; }
     
-    /* Prompt Cards */
-    .prompt-card { background-color: #2b2d31; padding: 20px; border-radius: 12px; border: 1px solid #3f4147; cursor: pointer; height: 100%; transition: all 0.2s ease; margin-bottom: 10px; }
-    .prompt-card:hover { background-color: #3f4147; transform: translateY(-2px); }
-    .card-title { font-weight: 600; font-size: 1rem; margin-bottom: 8px; color: #10a37f; }
-    .card-subtitle { font-size: 0.85rem; color: #b4b4b4; }
+    /* Tombol Utama menggunakan warna request User #1c1c84 */
+    .stButton > button[kind="primary"] { 
+        background-color: #1c1c84 !important; 
+        color: white !important; 
+        border: none !important; 
+    }
+    .stButton > button[kind="primary"]:hover { 
+        background-color: #2a2a9e !important; 
+    }
+    
+    /* Prompt Cards (Mirip referensi) */
+    .prompt-card-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .prompt-card { 
+        background-color: #2b2d31; 
+        padding: 15px; 
+        border-radius: 8px; 
+        border: 1px solid #3f4147; 
+        cursor: pointer; 
+        transition: all 0.2s ease; 
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .prompt-card:hover { 
+        background-color: #35373c; 
+        border-color: #1c1c84; 
+    }
+    .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; color: #ffffff; }
+    .card-subtitle { font-size: 0.8rem; color: #a0a0a0; line-height: 1.3; }
+    
+    /* Kolom Header */
+    .col-header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
     
     /* Chat Bubbles */
     .stChatMessage { background-color: transparent; }
-    .stChatMessage[data-testid="chat-message-user"] { background-color: #2b2d31; border-radius: 15px; padding: 15px 20px; max-width: 85%; margin-left: auto; border: 1px solid #3f4147; }
+    .stChatMessage[data-testid="chat-message-user"] { 
+        background-color: #2b2d31; 
+        border-radius: 15px; 
+        padding: 15px 20px; 
+        max-width: 85%; 
+        margin-left: auto; 
+        border: 1px solid #3f4147; 
+    }
     .stChatMessage[data-testid="chat-message-assistant"] { padding: 15px 0px; }
     
-    /* Inputs */
-    .stChatInputContainer { border: 1px solid #3f4147 !important; border-radius: 20px !important; background-color: #2b2d31 !important; padding: 5px 15px !important; }
+    /* Input Styling */
+    .stChatInputContainer { 
+        border: 1px solid #3f4147 !important; 
+        border-radius: 12px !important; 
+        background-color: #2b2d31 !important; 
+        padding: 5px 15px !important; 
+    }
     
     /* Layout Helpers */
     .center-text { text-align: center; }
     .footer-text { text-align: center; font-size: 0.75rem; color: #8e8e8e; margin-top: 15px; }
-    
-    /* Admin KPI Cards */
-    .kpi-card { background-color: #2b2d31; padding: 20px; border-radius: 10px; border-left: 4px solid #10a37f; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .kpi-value { font-size: 2rem; font-weight: bold; color: #ffffff; }
-    .kpi-label { font-size: 0.9rem; color: #b4b4b4; text-transform: uppercase; letter-spacing: 1px; }
 </style>
 """, unsafe_allow_html=True)
 
