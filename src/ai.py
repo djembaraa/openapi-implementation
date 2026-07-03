@@ -252,7 +252,7 @@ class AIAssistant:
         try:
             # 5. Panggil API AI untuk menghasilkan jawaban (menggunakan model Flash yang sangat cepat)
             response = self.client.chat.completions.create(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-flash-lite",
                 messages=messages,
                 temperature=0.7 # Kreativitas 70%
             )
