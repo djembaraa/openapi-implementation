@@ -19,7 +19,10 @@ class ConfigManager:
             print("[Error] OpenAI API key is missing or invalid.")
             print("Please add your valid OPENAI_API_KEY in the .env file.")
             sys.exit(1)
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(
+            api_key=self.api_key, 
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+        )
 
 class DocumentProcessor:
     """Handles loading and processing of TXT and PDF files."""
@@ -76,7 +79,7 @@ class RAGSystem:
         try:
             response = self.client.embeddings.create(
                 input=self.chunks,
-                model="text-embedding-3-small"
+                model="gemini-embedding-2"
             )
             embeddings_list = [item.embedding for item in response.data]
             self.embeddings = np.array(embeddings_list)
@@ -92,7 +95,7 @@ class RAGSystem:
         try:
             query_response = self.client.embeddings.create(
                 input=query,
-                model="text-embedding-3-small"
+                model="gemini-embedding-2"
             )
             query_embedding = np.array(query_response.data[0].embedding)
             
@@ -168,7 +171,7 @@ class AIAssistant:
         start_time = time.time()
         try:
             response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gemini-2.5-flash",
                 messages=messages,
                 temperature=0.7
             )
