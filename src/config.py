@@ -45,9 +45,10 @@ def get_supabase_client() -> Client:
     # Memuat variabel lingkungan
     load_dotenv()
     
-    # Menarik URL dan Key publik dari Supabase
+    # Menarik URL dan Key dari Supabase
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    # Memprioritaskan SERVICE_ROLE_KEY agar bebas dari masalah keamanan RLS database
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
     
     # Validasi: Jika tidak ada URL atau Key, hentikan aplikasi agar tidak error panjang
     if not url or not key:
