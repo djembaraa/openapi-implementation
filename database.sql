@@ -1,29 +1,35 @@
--- Jalankan script SQL ini di menu "SQL Editor" pada dashboard Supabase Anda.
+-- HAPUS TABEL LAMA JIKA ADA
+DROP TABLE IF EXISTS chat_messages CASCADE;
+DROP TABLE IF EXISTS chat_sessions CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
--- 1. Membuat tabel 'users' untuk data login
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
-);
-
--- 2. Membuat tabel 'chat_sessions' untuk daftar sesi obrolan (sidebar)
+-- 1. Membuat tabel 'chat_sessions' yang terhubung dengan 'auth.users'
 CREATE TABLE chat_sessions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     title TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Membuat tabel 'chat_messages' untuk menyimpan isi pesan
+-- 2. Membuat tabel 'chat_messages'
 CREATE TABLE chat_messages (
     id SERIAL PRIMARY KEY,
-    session_id INTEGER REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    session_id INTEGER REFERENCES chat_sessions(id) ON DELETE CASCADE NOT NULL,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Membuat 1 user dummy untuk testing awal (Silakan ganti passwordnya nanti)
-INSERT INTO users (username, password) 
-VALUES ('djembar', 'rahasia123');
+-- 3. Menyiapkan Row Level Security (Biar aman)
+ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only see their own sessions" ON chat_sessions
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only see messages in their sessions" ON chat_messages
+    FOR ALL USING (
+        session_id IN (
+            SELECT id FROM chat_sessions WHERE user_id = auth.uid()
+        )
+    );
