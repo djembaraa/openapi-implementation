@@ -29,7 +29,9 @@ def get_openai_client() -> OpenAI:
     # agar mengarah ke server Gemini (Gratis) alih-alih server asli OpenAI (Berbayar).
     return OpenAI(
         api_key=api_key,
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        max_retries=5,
+        timeout=30.0
     )
 
 @st.cache_resource
