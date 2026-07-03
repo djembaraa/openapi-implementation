@@ -1,61 +1,83 @@
-# AI Assistant CLI - Responsi Praktik Pemrograman Sistem Cerdas
+# 🌟 Rayn.AI - Asisten AI Pribadi Berbasis Web
 
 **Oleh:** Djembar Arafat (21SA1156)
 
-Ini adalah proyek aplikasi *Command Line Interface* (CLI) AI Assistant berbasis Python yang menggunakan **OpenAI API**. Proyek ini dibuat untuk memenuhi tugas responsi Praktik Pemrograman Sistem Cerdas.
+Ini adalah proyek aplikasi **Web Asisten AI (Rayn.AI)** yang dikembangkan menggunakan antarmuka **Streamlit**, pemrosesan bahasa alami (NLP), dan arsitektur database modern berbasis Cloud. Proyek ini awalnya dirancang sebagai CLI, namun telah **di-upgrade total (Over-engineered)** untuk memenuhi standar industri.
 
-## 🌟 Fitur Utama
-1. **Chat AI dengan RAG (Retrieval-Augmented Generation)**: Mampu menjawab pertanyaan pengguna berdasarkan konteks dokumen (mendukung format `.pdf` dan `.txt`). Ekstraksi dan pencarian teks menggunakan *embedding* OpenAI dan perhitungan *Cosine Similarity* menggunakan pustaka `numpy`.
-2. **Ringkasan Dokumen (Summarization)**: Meringkas seluruh isi dokumen yang telah dimuat secara otomatis dalam bahasa Indonesia yang terstruktur.
-3. **Analisis Sentimen**: Mengklasifikasikan teks masukan pengguna ke dalam sentimen "Positif", "Negatif", atau "Netral".
-4. **Riwayat Percakapan JSON**: Seluruh histori obrolan antara pengguna dan sistem disimpan secara permanen di dalam format JSON (`chat_history.json`).
-5. **Filter Etika & SARA**: AI dilarang dan akan menolak keras secara sopan setiap pertanyaan yang mengandung unsur SARA (Suku, Agama, Ras, dan Antargolongan), ujaran kebencian, atau melanggar pedoman etika, disertai alasannya.
-6. **Metrik Performa (Real-time)**: Setiap kali AI menjawab, sistem akan mencetak secara langsung waktu proses respons (dalam hitungan detik) dan total token yang dihabiskan.
+---
 
-## 🛠️ Arsitektur & Desain
-Aplikasi ini dikembangkan menggunakan konsep pemrograman Modular (Object-Oriented Programming). Kode dibagi menjadi 5 kelas utama yang menangani setiap tugas secara terpisah untuk mempermudah perawatan kode (Clean Code):
-- `ConfigManager`: Menangani inisialisasi API Key dari `.env` dan penanganan error terkait konfigurasi API.
-- `DocumentProcessor`: Menangani proses pembacaan file dan ekstrasi teks secara aman, termasuk ekstrak *PDF* lewat `PyPDF2`.
-- `RAGSystem`: Sistem inti *Retrieval-Augmented Generation*, yang men-chunk dokumen, mengubahnya menjadi vektor *embeddings*, dan mencari kemiripan berdasarkan pertanyaan user.
-- `HistoryManager`: Logika manajemen untuk membaca, menambah, menampilkan, dan menyimpan riwayat JSON.
-- `AIAssistant`: Mengelola komunikasi langsung dengan endpoint `chat/completions` OpenAI. Menjalankan filter *System Prompt* serta menghitung waktu *response time* dan metrik penggunaan token.
+## ✨ Fitur Utama (Edisi Bonus Maksimal)
 
-## 📋 Persyaratan Sistem
-- Python 3.8+ (direkomendasikan)
-- Koneksi Internet Stabil (untuk mengakses OpenAI API)
-- Sebuah OpenAI API Key yang aktif dan memiliki saldo.
+1. **Autentikasi Aman (Supabase Auth)**
+   - Login menggunakan Email & Password.
+   - **Google Single Sign-On (SSO)** menggunakan OAuth (PKCE Flow).
+2. **Obrolan AI Berbasis Gemini (OpenAI Wrapper)**
+   - Menggunakan model `gemini-2.5-flash` yang super cepat melalui wrapper OpenAI API.
+   - Dilengkapi *System Prompt* ketat untuk menolak instruksi berbau SARA dan menjaga etika.
+   - Setiap respon akan menampilkan **metrik performa** (Waktu respons & Token yang digunakan).
+3. **Retrieval-Augmented Generation (RAG) dengan FAISS**
+   - Mendukung unggahan dokumen `.pdf` dan `.txt`.
+   - Dokumen dipotong (chunking), diubah menjadi vektor (embedding), dan disimpan di **FAISS Vector DB** (sepenuhnya berjalan lokal/gratis tanpa perlu API berbayar tambahan).
+4. **Computer Vision (Analisis Gambar)**
+   - Mendukung unggahan gambar `.png`, `.jpg`, `.jpeg`.
+   - Mengonversi gambar ke `Base64` untuk dianalisis dan dijelaskan oleh AI.
+5. **Dukungan Audio Multi-arah (Gratis 100%)**
+   - **Speech-to-Text (STT):** Anda dapat menekan ikon mikrofon untuk merekam *Voice Note*, yang akan dikonversi menjadi teks menggunakan *Google Web Speech API* (`SpeechRecognition`).
+   - **Text-to-Speech (TTS):** Memiliki sakelar "Mode Suara" di menu Pengaturan. Jika diaktifkan, AI akan membacakan jawabannya menggunakan `gTTS`.
+6. **Dasbor Analitik Admin**
+   - Khusus untuk akun dengan email yang didaftarkan sebagai Admin, akan muncul tombol masuk ke Dasbor Analitik.
+   - Menampilkan metrik *Total Pengguna*, *Sesi Obrolan*, *Interaksi*, dan dapat melihat transkrip percakapan pengguna (Diawasi RLS).
 
-## 🚀 Cara Instalasi
-1. Buka Terminal (Command Prompt / PowerShell).
-2. Arahkan *directory* ke folder proyek ini.
-   ```bash
-   cd C:\Users\djemb\Desktop\responsi-psc-djembar-arafat-21sa1156
-   ```
-3. *(Opsional)* Buat Virtual Environment agar instalasi rapi:
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-4. Instal semua dependensi yang diperlukan melalui `pip`:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. Siapkan API Key Anda. Buka file `.env` di text editor pilihan Anda (atau buat satu jika belum ada), dan masukkan key Anda seperti di bawah ini:
-   ```env
-   OPENAI_API_KEY=sk-xxxxxx...
-   ```
+---
 
-## 🎮 Panduan Penggunaan
-Untuk menjalankan program AI CLI ini, gunakan perintah berikut di dalam terminal Anda:
+## 🛠️ Arsitektur & Teknologi
+
+Aplikasi ini dikembangkan dengan gaya Pemrograman Berorientasi Objek (OOP) secara sangat modular:
+- `main.py` : Entri utama aplikasi dan logika perutean (Routing).
+- `src/config.py` : Mengelola kunci rahasia (*Environment Variables*) dan inisialisasi API.
+- `src/database.py` : Mengelola interaksi CRUD ke PostgreSQL (Supabase).
+- `src/ai.py` : Pusat "Otak" aplikasi yang menangani Text, Vision, RAG (FAISS), dan Audio.
+- `src/ui/` : Memisahkan antarmuka pengguna menjadi komponen modular (Auth, Chat, Admin).
+
+Seluruh kode Python di dalamnya memiliki **Inline Comments** yang sangat rinci seperti buku tutorial untuk mempermudah penjelasan saat presentasi/responsi.
+
+---
+
+## 🚀 Persyaratan Sistem & Instalasi (Lokal)
+
+Tidak perlu bingung, instalasi di lokal komputer Anda sangatlah mudah!
+
+### 1. Persiapan
+Pastikan Anda sudah menginstal **Python 3.8** atau lebih baru.
+Buka Terminal / Command Prompt / PowerShell, lalu arahkan (*cd*) ke folder proyek ini.
+
+### 2. Instalasi Dependensi
+Jalankan perintah berikut untuk menginstal semua pustaka pendukung (Streamlit, PyPDF2, Faiss, SpeechRecognition, gTTS, Supabase, dll):
 ```bash
-python app.py
+pip install -r requirements.txt
 ```
 
-### Langkah demi Langkah di CLI:
-1. **Memuat Dokumen (Opsional)**: Saat pertama kali dijalankan, aplikasi akan meminta Anda memasukkan letak file/dokumen (misalnya: `C:\path\to\document.pdf`). Apabila Anda tidak ingin memuat dokumen, tekan `Enter` saja.
-2. **Menu Utama**: Aplikasi akan menampilkan menu:
-   - **[1] Chat AI**: Tanya apapun! Jika sebelumnya Anda menginput dokumen, AI akan memprioritaskan menjawab berbasis isi dokumen tersebut.
-   - **[2] Ringkas Dokumen**: Jika ada dokumen termuat, AI akan menyusun ringkasannya secara rinci.
-   - **[3] Analisis Sentimen**: Ketikkan kalimat atau curhatan apapun, dan AI akan menentukan apakah kalimat Anda Positif, Negatif, atau Netral.
-   - **[4] Riwayat Percakapan**: Menampilkan jejak rekam chat Anda dari sesi yang lalu.
-   - **[5] Keluar**: Mengakhiri dan menutup aplikasi.
+### 3. Konfigurasi Rahasia (Environment Variables)
+Anda wajib membuat sebuah file bernama **`.env`** di dalam folder proyek ini (sejajar dengan `main.py`). Buka file `.env` tersebut dengan *Notepad* atau *VS Code*, lalu isikan konfigurasi berikut:
+
+```env
+# Gunakan API Key Gemini milik Google (Bukan OpenAI sungguhan agar 100% GRATIS)
+# Dapatkan gratis di: https://aistudio.google.com/
+OPENAI_API_KEY=AIzaSy_masukkan_api_key_gemini_anda_di_sini
+
+# Konfigurasi Supabase (Dapatkan di Project Settings > API)
+SUPABASE_URL=https://xxxxxxxxxxxxxxxx.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5...
+
+# Email yang akan diberikan akses sebagai Super Admin
+ADMIN_EMAIL=djembar@email_anda.com
+```
+
+### 4. Menjalankan Aplikasi
+Setelah dependensi terinstal dan file `.env` sudah diatur, ketik perintah berikut di terminal:
+```bash
+streamlit run main.py
+```
+Browser akan otomatis terbuka dan mengarah ke `http://localhost:8501`.
+
+Selamat! Aplikasi Rayn.AI Anda sudah siap digunakan.
