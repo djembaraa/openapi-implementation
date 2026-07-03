@@ -12,11 +12,22 @@ class DatabaseManager:
         except Exception:
             return []
 
-    def create_session(self, user_id: str, title: str) -> str:
-        res = self.client.table("chat_sessions").insert({
+    def create_session(self, user_id: str, title: str, user_email: str = None) -> str:
+        data = {
             "user_id": user_id,
             "title": title
-        }).execute()
+        }
+        try:
+            if user_email:
+                data_with_email = data.copy()
+                data_with_email["user_email"] = user_email
+                res = self.client.table("chat_sessions").insert(data_with_email).execute()
+                return res.data[0]["id"]
+        except Exception:
+            # Jika kolom user_email belum dibuat oleh pengguna di Supabase, fallback ke standar
+            pass
+            
+        res = self.client.table("chat_sessions").insert(data).execute()
         return res.data[0]["id"]
 
     def get_messages(self, session_id: int) -> List[Dict[str, Any]]:
